@@ -1,1 +1,8 @@
-11
+def is_palindrome(text: str) -> bool:
+    return text == text[::-1]
+
+palindrome = "anna"
+not_palindrome = "ania"
+
+print(is_palindrome(palindrome))
+print(is_palindrome(not_palindrome))
