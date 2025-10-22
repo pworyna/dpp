@@ -1,0 +1,110 @@
+from fastapi import FastAPI
+from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey
+from sqlalchemy.orm import declarative_base, sessionmaker
+import csv
+
+engine = create_engine("sqlite:///movies.db", echo=True)
+Base = declarative_base()
+Session = sessionmaker(bind=engine)
+session = Session()
+
+class Movie(Base):
+    __tablename__ = "movies"
+    movieId = Column(Integer, primary_key=True)
+    title = Column(String)
+    genres = Column(String)
+
+class Link(Base):
+    __tablename__ = "links"
+    movieId = Column(Integer, primary_key=True)
+    imdbId = Column(Integer)
+    tmdbId = Column(Float)
+
+class Rating(Base):
+    __tablename__ = "ratings"
+    id = Column(Integer, primary_key=True)
+    userId = Column(Integer)
+    movieId = Column(Integer, ForeignKey("movies.movieId"))
+    rating = Column(Float)
+    timestamp = Column(Integer)
+
+class Tag(Base):
+    __tablename__ = "tags"
+    id = Column(Integer, primary_key=True)
+    userId = Column(Integer)
+    movieId = Column(Integer, ForeignKey("movies.movieId"))
+    tag = Column(String)
+    timestamp = Column(Integer)
+
+Base.metadata.create_all(engine)
+
+def load_data():
+    with open("movies.csv", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            session.add(Movie(
+                movieId=int(row["movieId"]),
+                title=row["title"],
+                genres=row["genres"]
+            ))
+
+    with open("links.csv", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            session.add(Link(
+                movieId=int(row["movieId"]),
+                imdbId=int(row["imdbId"]) if row["imdbId"] else None,
+                tmdbId=float(row["tmdbId"]) if row["tmdbId"] else None
+            ))
+
+    with open("ratings.csv", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            session.add(Rating(
+                userId=int(row["userId"]),
+                movieId=int(row["movieId"]),
+                rating=float(row["rating"]),
+                timestamp=int(row["timestamp"])
+            ))
+
+    with open("tags.csv", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            session.add(Tag(
+                userId=int(row["userId"]),
+                movieId=int(row["movieId"]),
+                tag=row["tag"],
+                timestamp=int(row["timestamp"])
+            ))
+
+    session.commit()
+
+
+
+load_data()
+
+app = FastAPI()
+
+@app.get("/")
+def root():
+    return {"hello": "world"}
+
+@app.get("/movies")
+def get_movies():
+    movies = session.query(Movie).all()
+    return [{"movieId": m.movieId, "title": m.title, "genres": m.genres} for m in movies]
+
+@app.get("/links")
+def get_links():
+    links = session.query(Link).all()
+    return [{"movieId": l.movieId, "imdbId": l.imdbId, "tmdbId": l.tmdbId} for l in links]
+
+@app.get("/ratings")
+def get_ratings():
+    ratings = session.query(Rating).all()
+    return [{"userId": r.userId, "movieId": r.movieId, "rating": r.rating, "timestamp": r.timestamp} for r in ratings]
+
+@app.get("/tags")
+def get_tags():
+    tags = session.query(Tag).all()
+    return [{"userId": t.userId, "movieId": t.movieId, "tag": t.tag, "timestamp": t.timestamp} for t in tags]
