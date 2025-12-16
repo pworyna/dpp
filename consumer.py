@@ -1,4 +1,3 @@
-# consumer.py
 import csv
 import os
 import time
