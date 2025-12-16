@@ -1,4 +1,3 @@
-# producer.py
 import csv
 import os
 import uuid
