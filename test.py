@@ -6,10 +6,8 @@ from models import Movie, Link, Rating, Tag
 
 client = TestClient(app)
 
-# ---------- FIXTURES ----------
 @pytest.fixture
 def movie_fixture():
-    # ensure no conflict with CSV IDs: use large id
     movie = Movie(movieId=999900, title="Test Movie", genres="Comedy")
     session.add(movie)
     session.commit()
@@ -28,7 +26,6 @@ def link_fixture():
 
 @pytest.fixture
 def rating_fixture():
-    # set explicit id to avoid confusion
     rating = Rating(id=999900, userId=1, movieId=999900, rating=4.5, timestamp=111111111)
     session.add(rating)
     session.commit()
@@ -45,9 +42,7 @@ def tag_fixture():
     session.delete(tag)
     session.commit()
 
-# ---------- TESTS FOR MOVIES ----------
 def test_movies_list_increases_after_create():
-    # get current count
     before = client.get("/movies").json()
     count_before = len(before)
     payload = {"movieId": 999901, "title": "New Movie X", "genres": "Action"}
@@ -55,7 +50,6 @@ def test_movies_list_increases_after_create():
     assert r.status_code == 201
     after = client.get("/movies").json()
     assert len(after) == count_before + 1
-    # cleanup
     m = session.query(Movie).filter(Movie.movieId == 999901).first()
     session.delete(m)
     session.commit()
@@ -86,7 +80,6 @@ def test_delete_movie():
     assert r.status_code == 204
     assert session.query(Movie).filter(Movie.movieId == m.movieId).first() is None
 
-# ---------- TESTS FOR LINKS ----------
 def test_links_list_increases_after_create():
     before = client.get("/links").json()
     cnt = len(before)
@@ -126,7 +119,6 @@ def test_delete_link():
     assert r.status_code == 204
     assert session.query(Link).filter(Link.movieId == l.movieId).first() is None
 
-# ---------- TESTS FOR RATINGS ----------
 def test_ratings_list_increases_after_create():
     before = client.get("/ratings").json()
     cnt = len(before)
@@ -135,7 +127,6 @@ def test_ratings_list_increases_after_create():
     assert r.status_code == 201
     after = client.get("/ratings").json()
     assert len(after) == cnt + 1
-    # cleanup
     rr = session.query(Rating).filter(Rating.id == 999905).first()
     session.delete(rr)
     session.commit()
@@ -166,7 +157,6 @@ def test_delete_rating():
     assert r.status_code == 204
     assert session.query(Rating).filter(Rating.id == rr.id).first() is None
 
-# ---------- TESTS FOR TAGS ----------
 def test_tags_list_increases_after_create():
     before = client.get("/tags").json()
     cnt = len(before)
@@ -175,7 +165,6 @@ def test_tags_list_increases_after_create():
     assert r.status_code == 201
     after = client.get("/tags").json()
     assert len(after) == cnt + 1
-    # cleanup
     tt = session.query(Tag).filter(Tag.id == 999907).first()
     session.delete(tt)
     session.commit()
