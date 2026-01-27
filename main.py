@@ -4,20 +4,13 @@ import easyocr
 import kagglehub
 import time
 import os
-import shutil
 import numpy as np
 import torch
 import xml.etree.ElementTree as ET
 from sklearn.model_selection import train_test_split
 from ultralytics import YOLO
-from pathlib import Path
 
-model_path = "license_plate_detector.pt"
-debug_directory = "debug_views"
-
-if os.path.exists(debug_directory):
-    shutil.rmtree(debug_directory)
-os.makedirs(debug_directory, exist_ok=True)
+model_path = "license_plate_detectorr.pt"
 
 dataset_path = kagglehub.dataset_download("piotrstefaskiue/poland-vehicle-license-plate-dataset/versions/5")
 
@@ -88,10 +81,8 @@ def transform_perspective(image, filename):
             height = int(max(np.linalg.norm(rect[1] - rect[2]), np.linalg.norm(rect[0] - rect[3])))
             dst = np.array([[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1]], dtype='float32')
             warped = cv2.warpPerspective(image, cv2.getPerspectiveTransform(rect, dst), (width, height))
-            cv2.imwrite(f"{debug_directory}/{filename}_WARPED.jpg", warped)
             return warped
     fallback = image[int(image.shape[0] * 0.1):int(image.shape[0] * 0.9), :]
-    cv2.imwrite(f"{debug_directory}/{filename}_FALLBACK.jpg", fallback)
     return fallback
 
 def calculate_final_grade(accuracy_percent: float, processing_time_sec: float) -> float:
@@ -102,10 +93,6 @@ def calculate_final_grade(accuracy_percent: float, processing_time_sec: float) -
     score = 0.7 * accuracy_norm + 0.3 * time_norm
     grade = 2.0 + 3.0 * score
     return round(grade * 2) / 2
-
-if not os.path.exists(model_path):
-    found = sorted(Path("runs/detect").glob("train*/weights/license_plate_detectorr.pt"), key=os.path.getmtime)
-    if found: model_path = str(found[-1])
 
 model = YOLO(model_path)
 reader = easyocr.Reader(['en'], gpu=torch.cuda.is_available())
@@ -154,4 +141,4 @@ duration = time.time() - start_time
 accuracy = correct_predictions / len(test_subset) * 100
 grade = calculate_final_grade(accuracy, duration)
 
-print(f"Mean IoU: {np.mean(iou_list):.4f}\nAccuracy: {accuracy:.2f}%\nTime:{duration:.2f}s\nGrade:{grade}")
+print(f"Mean IoU: {np.mean(iou_list):.4f}\nAccuracy: {accuracy:.2f}%\nTime: {duration:.2f}s\nGrade: {grade}")
