@@ -10,7 +10,7 @@ import xml.etree.ElementTree as ET
 from sklearn.model_selection import train_test_split
 from ultralytics import YOLO
 
-model_path = "license_plate_detectorr.pt"
+model_path = "license_plate_detector.pt"
 
 dataset_path = kagglehub.dataset_download("piotrstefaskiue/poland-vehicle-license-plate-dataset/versions/5")
 
